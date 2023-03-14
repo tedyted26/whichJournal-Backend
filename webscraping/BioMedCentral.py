@@ -2,35 +2,27 @@ from tokenize import String
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import request as rq
 import Journal
+import re
 
 import ssl
 
 
-def getSpringerJournals():
-    base_url = 'https://link.springer.com/journals/'
+def getBMCJournals():
+    url = 'https://www.biomedcentral.com/journals-a-z'
     journal_url_list = []
     i = 0
 
-    for letter in ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','#'):      
-        for page in range(0, 10): # por si acaso
-            url = base_url + letter + '/' + str(page+1)
-            try:
-                html = rq.urlopen(url, context=ssl.SSLContext()).read()
-        
-                only_journal_li = SoupStrainer("li", attrs={"class": "c-atoz-list__item"})
-                soup = BeautifulSoup(html, 'html.parser', parse_only=only_journal_li)
-        
-                for a in soup.findAll("a"):
-                    journal_url = a["href"]
-                    journal_url_list.append(journal_url)
-            
-            except:
-                i += 1 # para ver cuantas páginas tienen error 410
-                print(i)
-                break
-               
-    #except NameError:
-                # print(NameError.name)
+    try:
+        html = rq.urlopen(url, context=ssl.SSLContext()).read()
+        only_journal_ol = SoupStrainer("ol", attrs={"class": "u-list-reset ctx-journal-list"})
+        soup = BeautifulSoup(html, 'html.parser', parse_only=only_journal_ol)
+
+        for li in soup.findAll("li", attrs={"class": "c-list-group__item"}):
+            journal_url = li.find("a")["href"].replace("//", "https://")
+            journal_url_list.append(journal_url)
+                   
+    except NameError:
+            print(NameError.name)
      
     for journal_url in journal_url_list:
         print(journal_url)
@@ -39,7 +31,7 @@ def getSpringerJournals():
 
 
 
-def getSpringerJournalDetails(url: str):
+def getBMCJournalDetails(url: str):
     html = ""
     head = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36',
@@ -58,69 +50,102 @@ def getSpringerJournalDetails(url: str):
     except: 
         pass
 
-    if html == "" or not url.startswith("https://www.springer.com/journal"):
+    if html == "":
         return Journal.Journal(url, "", "", "", "", "", "", "", 
-                   "", "", "", "", "", "", "", "", "Springer", "")
+                   "", "", "", "", "", "", "", "", "BMC", "")
     
-    soup = BeautifulSoup(html, 'html.parser')   
-    imagePath = soup.find("div", class_="c-product-header__cover").find("img")["src"]
-    title = soup.find(class_="c-product-header__title").text.replace("\n", "")
-    desc = soup.find(class_ = "app-promo-text").text.replace("\n", "")
-
-    description_items = soup.findAll(class_="c-list-description__item")
-    for item in description_items:
-        item_name = item.find(class_="c-list-description__term").text.replace("\n", "")
-        if item_name.find("ISSN") != -1:
-            issn = item.find(class_="c-list-description__details").text.replace("\n", "").replace(" ", "")
-        if item_name == "Publishing model":
-            type = item.find(class_="c-list-description__details").text.replace("How to publish with us, including Open Access", "").replace("\n", "").lstrip().rstrip()
+    soup = BeautifulSoup(html, 'html.parser')
+    imagePath = ""   
+    try: 
+        imagePath = soup.find("div", class_="cms-item c-image-copyright").find("img")["src"]
+    except:
+        pass
+    title = soup.find(class_="c-journal-header__inner").text.replace("\n", "")
+    desc = ""
+    issn = soup.find(class_="c-journal-footer__issn").text.split()[1]
+    type = "Open Access"
 
     releaseYear = "" # No encuentro info
-    
-    journal_metrics = soup.findAll(class_ = "app-journal-metrics__details")
+
     impactFactor = "" # Por si acaso no sale
     otherMetric = ""
     nameOtherMetric = ""
+
     timeDecision = ""
-    for metric in journal_metrics:
-        if metric["data-test"] == "metrics-speed-value":
-            timeDecision = metric.text
-        if metric["data-test"] == "impact-factor-value":
-            impactFactor = metric.text.split()[0]
-        if metric["data-test"] == "five-year-impact-factor-value":
-            otherMetric = metric.text.split()[0]
-            nameOtherMetric = "Five year impact factor"
+    acceptanceRate = ""
+    timePublication = ""
+    timeReview = ""
+    
+    metrics = soup.find(class_="c-page-layout__side u-text-sm").findAll(class_="c-separator")
+    timeSubmissionToAcceptance = 0
+    timeAcceptanceToPublication = 0
+    for div in metrics:
+        div_header = div.find("h3")
+        if div_header != None and div_header.text == "Annual Journal Metrics":
+            whole_text = ""
+            for p in div.find(class_="cms-article__body").findAll("p"):
+                whole_text += p.text.replace("\xa0", " ")
+
+            metric_match = re.findall(r'(\d+\.\d+)\s-\s([\d\-\w\s]*)',whole_text)
+            speed_match = re.findall(r'(\d+)\sdays\s(to|from)\s([A-Za-z\s]+)',whole_text)
+
+            if (metric_match == None or metric_match == []) and (metric_match == None or metric_match == []):
+                continue
+
+            if metric_match[0][1].startswith("2-year Impact Factor") or metric_match[0][1].startswith("2 year Impact Factor"):
+                impactFactor = metric_match[0][0]
+            
+                otherMetric = metric_match[1][0]
+                nameOtherMetric = metric_match[1][1]               
+            else:
+                otherMetric = metric_match[0][0]
+                nameOtherMetric = metric_match[0][1]
+
+            for match in speed_match:
+                if match[2].find('first decision for all manuscripts') != -1:
+                    weeks = round(int(match[0])/7, 1)
+                    timeDecision = str(weeks) + ' weeks'
+                elif match[2].find('submission to acceptance') != -1:
+                    timeSubmissionToAcceptance = match[0]
+                elif match[2].find('acceptance to publication') != -1:
+                    timeAcceptanceToPublication = match[0]
+    if timeSubmissionToAcceptance != 0 and timeAcceptanceToPublication != 0:
+        weeks = round((int(timeSubmissionToAcceptance) + int(timeAcceptanceToPublication))/7, 1)
+        timePublication = str(weeks) + ' weeks' 
     
     quartil = "" # No hay info
 
     price = ""
 
-    acceptanceRate = ""
-
-    timePublication = ""
-
-    timeReview = ""
-
     otherInfo = ""
 
     try:
-        req_info = rq.Request(url + "/ethics-and-disclosures", headers = head)
-        html_info = rq.urlopen(req_info).read()
-        info_section = BeautifulSoup(html_info, 'html.parser').find(class_ = "u-text-sans-serif")
-        otherInfo = info_section.text.replace("\n", "")
+        req_price = rq.Request(url + "about", headers = head)
+        html_price = rq.urlopen(req_price).read()
+        price_soup = BeautifulSoup(html_price, 'html.parser')
+        main_section = price_soup.find(class_="c-page-layout__main")
+        for div in main_section.findAll("div", attrs={"class": "cms-item"}):
+            if div.find("h2").text == "Aims and Scope":
+                desc = soup.find(class_ = "placeholder-aimsAndScope_content").text.replace("\n", "")
+
+            if div.find("h2").text == "Article-processing charges":
+                price_section = div
+                break
+        price = re.search("\$\d+\.?\d+",price_section.text).group()
     except:
         pass
     
     
     return Journal.Journal(url, imagePath, title, desc, issn, releaseYear, type, price, 
-                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Springer", otherInfo)
+                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "BMC", otherInfo)
                 
 
 
-list_journals = getSpringerJournals()
+list_journals = getBMCJournals()
 i = 0
 for journal in list_journals:
     print("Empezando journal " + str(i+1)+ " de "+ str(len(list_journals)))
-    print(getSpringerJournalDetails(journal).title)
+    print(journal)
+    j = getBMCJournalDetails(journal)
+    print(j.title)
     i = i+1
-                
