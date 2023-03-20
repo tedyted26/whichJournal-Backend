@@ -8,9 +8,20 @@ import ssl
 
 def getElsevierPages():
     url = "https://www.elsevier.com/search-results?query=&labels=journals"
+    head = {
+  'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+  'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+  'Accept-Encoding': 'none',
+  'Accept-Language': 'en-US,en;q=0.8',
+  'Connection': 'keep-alive',
+  'refere': 'https://example.com',
+  'cookie': """your cookie value ( you can get that from your web page) """
+    }
     pages = 1
     try:
-        html = rq.urlopen(url, context=ssl.SSLContext()).read()
+        req = rq.Request(url, headers = head)
+        html = rq.urlopen(req).read()
         only_pagination = SoupStrainer(class_="pagination-status")
         soup = BeautifulSoup(html, 'html.parser', parse_only=only_pagination)        
         pages = soup.text.split()
@@ -25,22 +36,35 @@ def getElsevierPages():
 
 def getElsevierJournals(paginas = 1):
     url = "https://www.elsevier.com/search-results?query=&labels=journals&sort=document.titleRaw-asc"
+    head = {
+  'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+  'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+  'Accept-Encoding': 'none',
+  'Accept-Language': 'en-US,en;q=0.8',
+  'Connection': 'keep-alive',
+  'refere': 'https://example.com',
+  'cookie': """your cookie value ( you can get that from your web page) """
+    }
     journal_url_list = []
     i = 0
 
     for p in range(paginas):
         url_temp = url + "&page=" + str(p+1)
-    #try:
-        html = rq.urlopen(url_temp, context=ssl.SSLContext()).read()
-        only_journal_h2 = SoupStrainer("h2")
-        soup = BeautifulSoup(html, 'html.parser', parse_only=only_journal_h2)
+        print("Scrapeando: ", url_temp)
+        try:
+            req = rq.Request(url_temp, headers = head)
+            html = rq.urlopen(req).read()
+            only_journal_h2 = SoupStrainer("h2")
+            soup = BeautifulSoup(html, 'html.parser', parse_only=only_journal_h2)
         
-        for a in soup.findAll("a"):
-            journal_url = a["href"]
-            journal_url_list.append(journal_url)
-    #except:
-        # i += 1 # para ver cuantas páginas tienen error 410
-        # print(i)
+            for a in soup.findAll("a"):               
+                journal_url = a["href"]
+                print("Journal_url:", journal_url)
+                journal_url_list.append(journal_url)
+        except:
+            i += 1 # para ver cuantas páginas tienen error
+            print("Error ", i)
     #except NameError:
     #    print(NameError.name)
      
@@ -54,7 +78,7 @@ def getElsevierJournals(paginas = 1):
 def getElsevierJournalDetails(url: str):
     html = ""
     head = {
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36',
+  'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
   'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
   'Accept-Encoding': 'none',
