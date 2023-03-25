@@ -1,10 +1,7 @@
 from tokenize import String
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import request as rq
-import Conference
-import re
 
-import ssl
 # update 2021
 # others 2016
 # MDPI has some controversy

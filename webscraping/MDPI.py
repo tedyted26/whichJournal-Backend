@@ -81,7 +81,6 @@ def getMDPIJournalDetails(url: str):
         if text.startswith("ISSN: "):
             issn = text.removeprefix("ISSN: ")
 
-    releaseYear = "" # No encuentro info
     type = "Open Access"
     
     quartil = "" # No hay info
@@ -107,12 +106,22 @@ def getMDPIJournalDetails(url: str):
         except:
             pass
 
-    price = ""
     acceptanceRate = ""
     timeDecision = ""
     timePublication = ""
     timeReview = ""
-    otherInfo = ""
+
+    rapid_publication = soup.find("div", class_="journal__description__content").find("ul").findAll("li")
+    try:
+        for li in rapid_publication:
+            if li.text.startswith("Rapid"):
+                timeDecision = re.search("first\s+decision[\w\s]+\s(\d+\.\d+\sdays)",li.text).group(1)
+                timePublication = re.search("acceptance\s+to\s+publication[\w\s]+\s(\d+\.\d+\sdays)",li.text).group(1)
+    except:
+        pass
+
+    price = ""
+    otherInfo = []
     
     html_precio = ""
     url_precio = url+"/apc"
@@ -128,23 +137,39 @@ def getMDPIJournalDetails(url: str):
         price_re = re.search("\(APC\)\sof\s(\d+\s\w+)",content)
         if price_re != None:
             price = price_re.group(1).replace("\xa0", "")
-    
-    return Journal.Journal(url, imagePath, title, desc, issn, releaseYear, type, price, 
+
+    html_index = ""
+    url_index = url+"/indexing"
+
+    try:
+        req_index = rq.Request(url_index, headers = head)
+        html_index = rq.urlopen(req_index).read()
+    except: 
+        pass
+
+    if html_index != "":
+        soup_index = BeautifulSoup(html_index, 'html.parser')  
+        content = soup_index.find("h2", string="Indexing & Abstracting Services").find_next_sibling()
+        for li in content.findAll("li"):
+            otherInfo.append(li.text.strip())
+
+
+    return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
                    impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "MDPI", otherInfo)
                 
 
 
 # Get all urls
-wiley_journals_url = getMDPIJournals()
-i = 0
-# For each journal check if it already exists and if not scrape it
-for journal in wiley_journals_url:
-    print(journal)
-    print(getMDPIJournalDetails(journal).price)
-    i +=1
-    pass
+# wiley_journals_url = getMDPIJournals()
+# i = 0
+# # For each journal check if it already exists and if not scrape it
+# for journal in wiley_journals_url:
+#     print(journal)
+#     print(getMDPIJournalDetails(journal).price)
+#     i +=1
+#     pass
 
-
+# getMDPIJournalDetails("https://www.mdpi.com/journal/remotesensing")
 
 
 

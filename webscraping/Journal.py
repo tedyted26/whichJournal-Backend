@@ -4,7 +4,6 @@ class Journal:
     title:str,
     description: str,
     issn:str,
-    releaseYear:str,
     type:str,
     price:str,
     impactFactor:str,
@@ -22,7 +21,6 @@ class Journal:
         self.title = title
         self.description = description
         self.issn = issn
-        self.releaseYear = releaseYear
         self.type = type
         self.price = price
         self.impactFactor = impactFactor

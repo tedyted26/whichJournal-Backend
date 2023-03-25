@@ -454,13 +454,13 @@ def getSavedCategories():
 ]
 
 # categories = getWikiCFPCategories()
-links = []
-list_conferences = []
+# links = []
+# list_conferences = []
 
-for c in getSavedCategories():
-   print(c)
-   links.extend(getWikiCFPConferences(c))
+# for c in getSavedCategories():
+#    print(c)
+#    links.extend(getWikiCFPConferences(c))
 
-for link in links:
-    # comprobar si link existe en la bbdd antes de scrapear de nuevo
-    list_conferences.append(getWikiCFPConferenceDetails("http://www.wikicfp.com/" + link))
+# for link in links:
+#     # comprobar si link existe en la bbdd antes de scrapear de nuevo
+#     list_conferences.append(getWikiCFPConferenceDetails("http://www.wikicfp.com/" + link))

@@ -106,10 +106,9 @@ def getElsevierJournalDetails(url: str):
     issn_text = soup.find(class_="js-issn").text.split()
     issn = issn_text[2].removesuffix("Print")
 
-    releaseYear = "" # No encuentro info
     type = soup.find(class_ = "js-open-statement-text").text
     
-    impactFactor = "" # Por si acaso no sale
+    impactFactor = ""
     try:
         impactFactor = soup.find(class_ = "js-impact-factor").find(class_="text-l").text
     except:
@@ -130,56 +129,40 @@ def getElsevierJournalDetails(url: str):
 
     price = ""
     try:
-        price = soup.find(class_ = "list-price").text.removesuffix("*")
+        price = soup.find(class_ = "list-price u-h2").text.removesuffix("*")
+    except:
+        pass
+
+    try:
+        metrics = soup.findAll("div", class_="metric u-padding-s-left")
     except:
         pass
     
     acceptanceRate = ""
-    try:
-        
-        acceptanceRate = soup.find()
-    except: 
-        pass
-
     timeDecision = ""
-    try:
-        otherMetrics = soup.find(class_ = 'metrics-row')
-        for metric in otherMetrics.findAll(class_="metric"):
-            nameMetric = metric.find(class_ = 'text-s').text
-            if nameMetric == 'Time to First Decision':
-                timeDecision = metric.find(class_ = 'value').text
-    except:
-        pass
-
     timePublication = ""
-    try:
-        otherMetrics = soup.find(class_ = 'metrics-row')
-        for metric in otherMetrics.findAll(class_="metric"):
-            nameMetric = metric.find(class_ = 'text-s').text
-            if nameMetric == 'Publication Time':
-                timePublication = metric.find(class_ = 'value').text
-    except:
-        pass
-
     timeReview = ""
-    try:
-        otherMetrics = soup.find(class_ = 'metrics-row')
-        for metric in otherMetrics.findAll(class_="metric"):
-            nameMetric = metric.find(class_ = 'text-s').text
-            if nameMetric == 'Review Time':
-                timeReview = metric.find(class_ = 'value').text
-    except:
-        pass
 
-    otherInfo = ""
+    for metric in metrics:
+        nameMetric = metric.find(class_ = 'text-s').text
+        if nameMetric == 'Time to First Decision':
+                timeDecision = metric.find(class_ = 'value').text
+        if nameMetric == 'Publication Time':
+                timePublication = metric.find(class_ = 'value').text
+        if nameMetric == 'Review Time':
+                timeReview = metric.find(class_ = 'value').text
+        if nameMetric == 'Acceptance Rate':
+                acceptanceRate = metric.find(class_ = 'value').text
+
+    indexing = ""
     
-    return Journal.Journal(url, imagePath, title, desc, issn, releaseYear, type, price, 
-                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Elsevier", otherInfo)
+    return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
+                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Elsevier", indexing)
                 
 
 
 # Get all urls
-elsevier_journals_url = getElsevierJournals(getElsevierPages())
+# elsevier_journals_url = getElsevierJournals(getElsevierPages())
 
 # For each journal check if it already exists and if not scrape it
 # for journal in elsevier_journals_url:

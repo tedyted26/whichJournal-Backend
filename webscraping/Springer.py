@@ -74,11 +74,9 @@ def getSpringerJournalDetails(url: str):
             issn = item.find(class_="c-list-description__details").text.replace("\n", "").replace(" ", "")
         if item_name == "Publishing model":
             type = item.find(class_="c-list-description__details").text.replace("How to publish with us, including Open Access", "").replace("\n", "").lstrip().rstrip()
-
-    releaseYear = "" # No encuentro info
     
     journal_metrics = soup.findAll(class_ = "app-journal-metrics__details")
-    impactFactor = "" # Por si acaso no sale
+    impactFactor = ""
     otherMetric = ""
     nameOtherMetric = ""
     timeDecision = ""
@@ -101,34 +99,26 @@ def getSpringerJournalDetails(url: str):
 
     timeReview = ""
 
-    otherInfo = ""
+    otherInfo = []
 
     try:
-        req_info = rq.Request(url + "/ethics-and-disclosures", headers = head)
-        html_info = rq.urlopen(req_info).read()
-        info_section = BeautifulSoup(html_info, 'html.parser').find(class_ = "u-text-sans-serif")
-        otherInfo = info_section.text.replace("\n", "")
+        otherInfo_list = soup.find("h2", class_="app-section__heading", string="About this journal").find_next_sibling()
+        for li in otherInfo_list.findAll("li", class_="c-list-columned__item"):
+            otherInfo.append(li.text.strip())
     except:
         pass
     
     
-    return Journal.Journal(url, imagePath, title, desc, issn, releaseYear, type, price, 
+    return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
                    impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Springer", otherInfo)
                 
 
 
-# Get all urls
-# elsevier_journals_url = getElsevierJournals(getElsevierPages())
+# list_journals = getSpringerJournals()
+# i = 0
+# for journal in list_journals:
+#     print("Empezando journal " + str(i+1)+ " de "+ str(len(list_journals)))
+#     print(getSpringerJournalDetails(journal).title)
+#     i = i+1
 
-# For each journal check if it already exists and if not scrape it
-# for journal in elsevier_journals_url:
-#    pass
-
-# getElsevierJournalDetails('https://www.sciencedirect.com/journal/international-journal-of-applied-earth-observation-and-geoinformation')
-list_journals = getSpringerJournals()
-i = 0
-for journal in list_journals:
-    print("Empezando journal " + str(i+1)+ " de "+ str(len(list_journals)))
-    print(getSpringerJournalDetails(journal).title)
-    i = i+1
-                
+# getSpringerJournalDetails("https://www.springer.com/journal/43673")           

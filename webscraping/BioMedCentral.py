@@ -65,8 +65,6 @@ def getBMCJournalDetails(url: str):
     issn = soup.find(class_="c-journal-footer__issn").text.split()[1]
     type = "Open Access"
 
-    releaseYear = "" # No encuentro info
-
     impactFactor = "" # Por si acaso no sale
     otherMetric = ""
     nameOtherMetric = ""
@@ -117,35 +115,50 @@ def getBMCJournalDetails(url: str):
 
     price = ""
 
-    otherInfo = ""
+    otherInfo = []
+    html_about = ""
 
     try:
-        req_price = rq.Request(url + "about", headers = head)
-        html_price = rq.urlopen(req_price).read()
-        price_soup = BeautifulSoup(html_price, 'html.parser')
-        main_section = price_soup.find(class_="c-page-layout__main")
-        for div in main_section.findAll("div", attrs={"class": "cms-item"}):
-            if div.find("h2").text == "Aims and Scope":
-                desc = soup.find(class_ = "placeholder-aimsAndScope_content").text.replace("\n", "")
-
-            if div.find("h2").text == "Article-processing charges":
-                price_section = div
-                break
-        price = re.search("\$\d+\.?\d+",price_section.text).group()
+        req_about = rq.Request(url + "about", headers = head)
+        html_about = rq.urlopen (req_about).read()
     except:
         pass
     
+    if html_about != "":
+        price_soup = BeautifulSoup(html_about, 'html.parser')
+        main_section = price_soup.find(class_="c-page-layout__main")
+        for div in main_section.findAll("div", attrs={"class": "cms-item"}):
+            if div.find("h2").text == "Aims and scope":
+                desc = price_soup.find(class_ = "placeholder-aimsAndScope_content").text.replace("\n", "")
+                continue
+
+            if div.find("h2").text == "Article-processing charges":
+                price_section = div.find(class_="cms-article__body")
+                try:
+                    price = re.search("\$\d+\.?\d+",price_section.text).group()
+                except:
+                    pass
+                continue
+            
+            if div.find("h2").text == "Indexing services":
+                indexing = div.find("ul")
+                for li in indexing.findAll("li"):
+                    otherInfo.append(li.text.strip())
+                continue
+ 
     
-    return Journal.Journal(url, imagePath, title, desc, issn, releaseYear, type, price, 
+    return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
                    impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "BMC", otherInfo)
                 
 
 
-list_journals = getBMCJournals()
-i = 0
-for journal in list_journals:
-    print("Empezando journal " + str(i+1)+ " de "+ str(len(list_journals)))
-    print(journal)
-    j = getBMCJournalDetails(journal)
-    print(j.title)
-    i = i+1
+# list_journals = getBMCJournals()
+# i = 0
+# for journal in list_journals:
+#     print("Empezando journal " + str(i+1)+ " de "+ str(len(list_journals)))
+#     print(journal)
+#     j = getBMCJournalDetails(journal)
+#     print(j.title)
+#     i = i+1
+
+# getBMCJournalDetails("https://aepi.biomedcentral.com/")
