@@ -21,11 +21,8 @@ def getBMCJournals():
             journal_url = li.find("a")["href"].replace("//", "https://")
             journal_url_list.append(journal_url)
                    
-    except NameError:
-            print(NameError.name)
-     
-    for journal_url in journal_url_list:
-        print(journal_url)
+    except:
+        pass
 
     return journal_url_list
 
@@ -91,9 +88,16 @@ def getBMCJournalDetails(url: str):
                 continue
 
             if metric_match[0][1].startswith("2-year Impact Factor") or metric_match[0][1].startswith("2 year Impact Factor"):
-                impactFactor = metric_match[0][0]
-            
-                otherMetric = metric_match[1][0]
+                try:
+                    impactFactor = float(metric_match[0][0])
+                except:
+                    pass
+
+                try:
+                    otherMetric = float(metric_match[1][0])
+                except:
+                    pass
+                
                 nameOtherMetric = metric_match[1][1]               
             else:
                 otherMetric = metric_match[0][0]
@@ -119,7 +123,7 @@ def getBMCJournalDetails(url: str):
     html_about = ""
 
     try:
-        req_about = rq.Request(url + "about", headers = head)
+        req_about = rq.Request(url + "/about", headers = head)
         html_about = rq.urlopen (req_about).read()
     except:
         pass
@@ -127,24 +131,28 @@ def getBMCJournalDetails(url: str):
     if html_about != "":
         price_soup = BeautifulSoup(html_about, 'html.parser')
         main_section = price_soup.find(class_="c-page-layout__main")
-        for div in main_section.findAll("div", attrs={"class": "cms-item"}):
-            if div.find("h2").text == "Aims and scope":
-                desc = price_soup.find(class_ = "placeholder-aimsAndScope_content").text.replace("\n", "")
-                continue
 
-            if div.find("h2").text == "Article-processing charges":
-                price_section = div.find(class_="cms-article__body")
-                try:
-                    price = re.search("\$\d+\.?\d+",price_section.text).group()
-                except:
-                    pass
-                continue
+        aims = main_section.find("h2", string="Aims and scope")
+        if aims != None:
+            desc = aims.find_next_sibling().text.replace("\n", "")
+        else:
+            desc = soup.find("div", class_="placeholder-aimsAndScope_content").text.replace("\n", "")
             
-            if div.find("h2").text == "Indexing services":
-                indexing = div.find("ul")
+        charges = main_section.find("h2", string="Article-processing charges").find_next_sibling()
+        if charges != None:
+            price_section = charges.text
+            try:
+                price = re.search("\$\d+\.?\d+",price_section).group()
+            except:
+                pass
+            
+        index_div = main_section.find("div", attrs={"id": "indexing+services"})
+        if index_div != None:
+            indexing = index_div.find("ul")
+            if indexing != None:           
                 for li in indexing.findAll("li"):
                     otherInfo.append(li.text.strip())
-                continue
+            
  
     
     return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
@@ -161,4 +169,4 @@ def getBMCJournalDetails(url: str):
 #     print(j.title)
 #     i = i+1
 
-# getBMCJournalDetails("https://aepi.biomedcentral.com/")
+# getBMCJournalDetails("https://bmcproc.biomedcentral.com")

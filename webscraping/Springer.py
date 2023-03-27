@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup, SoupStrainer
 from urllib import request as rq
 import Journal
 
+import re
+
 import ssl
 
 
@@ -25,15 +27,7 @@ def getSpringerJournals():
                     journal_url_list.append(journal_url)
             
             except:
-                i += 1 # para ver cuantas páginas tienen error 410
-                print(i)
                 break
-               
-    #except NameError:
-                # print(NameError.name)
-     
-    for journal_url in journal_url_list:
-        print(journal_url)
 
     return journal_url_list
 
@@ -58,15 +52,34 @@ def getSpringerJournalDetails(url: str):
     except: 
         pass
 
-    if html == "" or not url.startswith("https://www.springer.com/journal"):
-        return Journal.Journal(url, "", "", "", "", "", "", "", 
+    if html == "":
+        return Journal.Journal(url, "", "", "", "", "", "", 
                    "", "", "", "", "", "", "", "", "Springer", "")
     
-    soup = BeautifulSoup(html, 'html.parser')   
-    imagePath = soup.find("div", class_="c-product-header__cover").find("img")["src"]
-    title = soup.find(class_="c-product-header__title").text.replace("\n", "")
-    desc = soup.find(class_ = "app-promo-text").text.replace("\n", "")
+    soup = BeautifulSoup(html, 'html.parser')
 
+    imagePath = ""
+    img_div = soup.find("div", class_="c-product-header__cover")
+    if img_div == None:
+        img_div = soup.find("img", attrs={"id", "coverImage"})
+    
+    try:
+        imagePath = img_div.find("img")["src"]
+    except:
+        pass
+
+    title = ""
+    title_h1 = soup.find("h1", class_="c-product-header__title")
+    if title_h1 == None:
+        title_h1 = soup.find("h1", class_="c-journal-header__title")
+        
+    try:
+        title = title_h1.text.replace("\n", "")
+    except:
+        pass
+    
+    issn = ""
+    type = ""
     description_items = soup.findAll(class_="c-list-description__item")
     for item in description_items:
         item_name = item.find(class_="c-list-description__term").text.replace("\n", "")
@@ -84,33 +97,54 @@ def getSpringerJournalDetails(url: str):
         if metric["data-test"] == "metrics-speed-value":
             timeDecision = metric.text
         if metric["data-test"] == "impact-factor-value":
-            impactFactor = metric.text.split()[0]
+            try:
+                impactFactor = float(metric.text.split()[0])
+            except:
+                pass
         if metric["data-test"] == "five-year-impact-factor-value":
-            otherMetric = metric.text.split()[0]
-            nameOtherMetric = "Five year impact factor"
-    
-    quartil = "" # No hay info
+            try:
+                otherMetric = float(metric.text.split()[0])
+                nameOtherMetric = "Five year impact factor"
+            except:
+                pass
 
     price = ""
-
-    acceptanceRate = ""
-
-    timePublication = ""
-
-    timeReview = ""
-
-    otherInfo = []
+    desc = ""
 
     try:
-        otherInfo_list = soup.find("h2", class_="app-section__heading", string="About this journal").find_next_sibling()
-        for li in otherInfo_list.findAll("li", class_="c-list-columned__item"):
-            otherInfo.append(li.text.strip())
+        req_about = rq.Request(url + "/about", headers = head)
+        html_about = rq.urlopen(req_about).read()
+    except: 
+        pass
+
+    if html_about != None:
+        soup_about =  BeautifulSoup(html_about, 'html.parser')
+        desc_div = soup_about.find("div", attrs={"id": "aimsAndScope"})
+        if desc_div != None:
+            desc = desc_div.find("p").text.replace("\n", "")
+        price_div = soup_about.find("div", attrs={"id": "article-processing+charges"})
+        if price_div != None:
+            try:
+                price = re.search("\$\d+\.?\d+",price_div.text).group()
+            except:
+                pass
+
+    quartil = "" # No hay info
+    acceptanceRate = ""
+    timePublication = ""
+    timeReview = ""
+    indexing = []
+
+    try:
+        indexing_list = soup.find("h2", class_="app-section__heading", string="About this journal").find_next_sibling()
+        for li in indexing_list.findAll("li", class_="c-list-columned__item"):
+            indexing.append(li.text.strip())
     except:
         pass
     
     
     return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
-                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Springer", otherInfo)
+                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Springer", indexing)
                 
 
 
@@ -121,4 +155,4 @@ def getSpringerJournalDetails(url: str):
 #     print(getSpringerJournalDetails(journal).title)
 #     i = i+1
 
-# getSpringerJournalDetails("https://www.springer.com/journal/43673")           
+# getSpringerJournalDetails("https://link.springer.com/journal/41120")           

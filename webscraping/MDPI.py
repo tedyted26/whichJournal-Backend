@@ -35,9 +35,6 @@ def getMDPIJournals():
         for a in soup.findAll("a", attrs={"class": "lean"}):
             journal_url = a["href"]
             journal_url_list.append("https://www.mdpi.com"+journal_url)
-     
-    for journal_url in journal_url_list:
-        print(journal_url)
 
     return journal_url_list
 
@@ -111,14 +108,18 @@ def getMDPIJournalDetails(url: str):
     timePublication = ""
     timeReview = ""
 
-    rapid_publication = soup.find("div", class_="journal__description__content").find("ul").findAll("li")
-    try:
-        for li in rapid_publication:
-            if li.text.startswith("Rapid"):
-                timeDecision = re.search("first\s+decision[\w\s]+\s(\d+\.\d+\sdays)",li.text).group(1)
-                timePublication = re.search("acceptance\s+to\s+publication[\w\s]+\s(\d+\.\d+\sdays)",li.text).group(1)
-    except:
-        pass
+    rapid_publication_container = soup.find("div", class_="journal__description__content")
+    if rapid_publication_container != None:
+        rapid_publication_list = rapid_publication_container.find("ul")
+        if rapid_publication_list != None:
+            rapid_publication = rapid_publication_list.findAll("li")
+            try:
+                for li in rapid_publication:
+                    if li.text.startswith("Rapid"):
+                        timeDecision = re.search("first\s+decision[\w\s]+\s(\d+\.\d+\sdays)",li.text).group(1)
+                        timePublication = re.search("acceptance\s+to\s+publication[\w\s]+\s(\d+\.\d+\sdays)",li.text).group(1)
+            except:
+                pass
 
     price = ""
     otherInfo = []
@@ -169,7 +170,7 @@ def getMDPIJournalDetails(url: str):
 #     i +=1
 #     pass
 
-# getMDPIJournalDetails("https://www.mdpi.com/journal/remotesensing")
+getMDPIJournalDetails("https://www.mdpi.com/journal/blsf")
 
 
 

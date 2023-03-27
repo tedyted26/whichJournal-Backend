@@ -2,6 +2,7 @@ from tokenize import String
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import request as rq
 import Journal
+import re
 
 import ssl
 
@@ -27,8 +28,8 @@ def getElsevierPages():
         pages = soup.text.split()
         pages = int(pages[3])
 
-    except NameError:
-        print(NameError.name)
+    except:
+        pass
 
     return pages
 
@@ -51,7 +52,6 @@ def getElsevierJournals(paginas = 1):
 
     for p in range(paginas):
         url_temp = url + "&page=" + str(p+1)
-        print("Scrapeando: ", url_temp)
         try:
             req = rq.Request(url_temp, headers = head)
             html = rq.urlopen(req).read()
@@ -60,17 +60,10 @@ def getElsevierJournals(paginas = 1):
         
             for a in soup.findAll("a"):               
                 journal_url = a["href"]
-                print("Journal_url:", journal_url)
                 journal_url_list.append(journal_url)
         except:
-            i += 1 # para ver cuantas páginas tienen error
-            print("Error ", i)
-    #except NameError:
-    #    print(NameError.name)
+            pass
      
-    for journal_url in journal_url_list:
-        print(journal_url)
-
     return journal_url_list
 
 
@@ -91,26 +84,43 @@ def getElsevierJournalDetails(url: str):
     try:
         req = rq.Request(url, headers = head)
         html = rq.urlopen(req).read()
-    except: 
+    except NameError: 
         pass
 
     if html == "":
-        return Journal.Journal(url, "", "", "", "", "", "", "", 
+        return Journal.Journal(url, "", "", "", "", "", "", 
                    "", "", "", "", "", "", "", "", "Elsevier", "")
     
     soup = BeautifulSoup(html, 'html.parser')   
     imagePath = soup.find("a", class_="js-cover-image-link").find("img")["src"]
     title = soup.find("h1").text
-    desc = soup.find(class_ = "slide-out").find(class_="spaced").text
 
-    issn_text = soup.find(class_="js-issn").text.split()
-    issn = issn_text[2].removesuffix("Print")
+    desc = ""
+    html_aims = ""
+    try:
+        req_aims = rq.Request(url.replace("https://www.journals.elsevier.com/", "https://www.sciencedirect.com/journal/") + "/about/aims-and-scope", headers = head)
+        html_aims = rq.urlopen(req_aims).read()
+    except: 
+        pass
 
-    type = soup.find(class_ = "js-open-statement-text").text
+    if html_aims != "":
+        soup_aims = BeautifulSoup(html_aims, 'html.parser')
+        desc_div = soup_aims.find("div", class_="js-aims-and-scope branded text-s")
+        if desc_div != None:
+            desc = desc_div.text.replace("\n", "")
+        soup_aims.clear()
+
+    issn_text = soup.find(class_="js-issn").text
+    issn = re.search("ISSN:\s+([\d\-]+)",issn_text).group(1)
+
+    type = ""
+    type_container = soup.find(class_ = "js-open-statement-text")
+    if type_container != None:
+        type = type_container.text
     
     impactFactor = ""
     try:
-        impactFactor = soup.find(class_ = "js-impact-factor").find(class_="text-l").text
+        impactFactor = float(soup.find(class_ = "js-impact-factor").find(class_="text-l").text)
     except:
         pass
     
@@ -121,9 +131,12 @@ def getElsevierJournalDetails(url: str):
     try:
         metric = soup.find(class_="metric") 
         nameOtherMetrics_aux = metric.find(class_="text-xs").text
-        if nameOtherMetrics_aux != "Impact Factor":     
-            nameOtherMetric = nameOtherMetrics_aux
-            otherMetric = metric.find(class_="text-l").text
+        if nameOtherMetrics_aux != "Impact Factor":                 
+            try:
+                nameOtherMetric = nameOtherMetrics_aux
+                otherMetric = float(metric.find(class_="text-l").text)
+            except:
+                pass
     except:
         pass
 
@@ -133,28 +146,42 @@ def getElsevierJournalDetails(url: str):
     except:
         pass
 
-    try:
-        metrics = soup.findAll("div", class_="metric u-padding-s-left")
-    except:
-        pass
-    
     acceptanceRate = ""
     timeDecision = ""
     timePublication = ""
     timeReview = ""
+    try:
+        metrics = soup.findAll("div", class_="metric u-padding-s-left")
+        for metric in metrics:
+            nameMetric = metric.find(class_ = 'text-s').text
+            if nameMetric == 'Time to First Decision':
+                    timeDecision = metric.find(class_ = 'value').text
+            if nameMetric == 'Publication Time':
+                    timePublication = metric.find(class_ = 'value').text
+            if nameMetric == 'Review Time':
+                    timeReview = metric.find(class_ = 'value').text
+            if nameMetric == 'Acceptance Rate':
+                    acceptanceRate = metric.find(class_ = 'value').text
+    except:
+        pass 
 
-    for metric in metrics:
-        nameMetric = metric.find(class_ = 'text-s').text
-        if nameMetric == 'Time to First Decision':
-                timeDecision = metric.find(class_ = 'value').text
-        if nameMetric == 'Publication Time':
-                timePublication = metric.find(class_ = 'value').text
-        if nameMetric == 'Review Time':
-                timeReview = metric.find(class_ = 'value').text
-        if nameMetric == 'Acceptance Rate':
-                acceptanceRate = metric.find(class_ = 'value').text
+    indexing = []
+    html_indexing = ""
+    try:
+        req_indexing = rq.Request(url.replace("https://www.journals.elsevier.com/", "https://www.sciencedirect.com/journal/") + "/about/abstracting-and-indexing", headers = head)
+        html_indexing = rq.urlopen(req_indexing).read()
+    except: 
+        pass
 
-    indexing = ""
+    if html_indexing != "":
+        soup_indexing = BeautifulSoup(html_indexing, 'html.parser')
+        indexing_div = soup_indexing.find("div", class_="abstracting-and-indexing branded")
+        if indexing_div != None:
+            indexing_ul = indexing_div.find("ul")
+            if indexing_ul != None:
+                for li in indexing_ul.findAll("li"):
+                    indexing.append(li.text.replace("\n", ""))
+        soup_indexing.clear()
     
     return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
                    impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Elsevier", indexing)
@@ -168,7 +195,7 @@ def getElsevierJournalDetails(url: str):
 # for journal in elsevier_journals_url:
 #    pass
 
-# getElsevierJournalDetails('https://www.sciencedirect.com/journal/international-journal-of-applied-earth-observation-and-geoinformation')
+# getElsevierJournalDetails('https://www.journals.elsevier.com/acute-pain')
 
 
 

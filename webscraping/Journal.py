@@ -6,16 +6,16 @@ class Journal:
     issn:str,
     type:str,
     price:str,
-    impactFactor:str,
+    impactFactor:float,
     quartil:str,
-    otherMetric:str,
+    otherMetric:float,
     nameOtherMetric:str,
     acceptanceRate:str,
     timeDecision:str,
     timePublication:str,
     timeReview:str,
     origin: str,
-    otherInfo: str):
+    indexing: list):
         self.url = url
         self.imagePath = imagePath
         self.title = title
@@ -32,4 +32,4 @@ class Journal:
         self.timePublication = timePublication
         self.timeReview = timeReview
         self.origin = origin
-        self.otherInfo = otherInfo
+        self.indexing = indexing
