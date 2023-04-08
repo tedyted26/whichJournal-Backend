@@ -3,6 +3,7 @@ import mysql.connector
 import datetime
 import sklearn
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 import doc_processing
 import os
 import csv
@@ -22,39 +23,36 @@ class main_recommender:
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
 
-    self.logger.addHandler(file_handler)   
-
-    # try:
-    #   self.mydb = mysql.connector.connect(
-    #   host="127.0.0.1",
-    #   user="root",
-    #   password="root",
-    #   database="whichjournal"
-    #   )
-    # except mysql.connector.Error:
-    #   self.logger.critical("Couldn't connect to DB. Error in Mysql.connector")
+    self.logger.addHandler(file_handler)
   
 
-  def recommend(self, title, desc, keywords, type = "journals"):
+  def recommend(self, title, desc, keywords, table = "journals"):
 
     # transform input
     corpus = [title + " " + title + " "+ desc + " " + keywords + " " + keywords + " " + keywords]
-    tfidf_vector = TfidfVectorizer(tokenizer = doc_processing.tokenizer)
-    X = tfidf_vector.fit_transform(corpus) 
+    # tfidf_vector = TfidfVectorizer(tokenizer = doc_processing.tokenizer)
+    # X = tfidf_vector.fit_transform(corpus) 
 
-    for i in range(X.shape[1]):
-      print(X.data[i])
-      print(tfidf_vector.get_feature_names_out()[X.indices[i]])
+    # for i in range(X.shape[1]):
+    #   print(X.data[i])
+    #   print(tfidf_vector.get_feature_names_out()[X.indices[i]])
 
-    matrix = None
+
+    
+    # assume term frequency matrix is stored in variable 'tf_matrix'
+
+    # create a TfidfTransformer object
+    tfidf_transformer = TfidfTransformer()
+
+    tf_matrix = None
     # get matrix
-    if os.path.isfile('tf_' + type + '_matrix.csv'): #Compruebo si existe el fichero
-        with open ('tf_' + type + '_matrix.csv','r') as f:
+    if os.path.isfile('recommender/tf_' + table + '_matrix.csv'): #Compruebo si existe el fichero
+        with open ('recommender/tf_' + table + '_matrix.csv','r') as f:
           reader = csv.reader(f)
           matrix = list(reader)
         
     # get diccionary
-    dictionary = self.getDictionary()
+    dictionary = self.getDictionary(table)
 
     # result = self.getTestText()
     # title_freq = Counter(title_lemma)
@@ -73,7 +71,8 @@ class main_recommender:
 
     pass
 
-  def getDictionary(self):
+  def getDictionary(self, table):
+    mydb = None
     try:
       mydb = mysql.connector.connect(
       host="127.0.0.1",
@@ -84,11 +83,12 @@ class main_recommender:
     except mysql.connector.Error:
       self.logger.critical("Couldn't connect to DB. Error in Mysql.connector")
     
-    mycursor = mydb.cursor()
-    mycursor.execute("SELECT * FROM journals WHERE origin = 'Elsevier' LIMIT 0, 50")
-    result = mycursor.fetchall()
-    mycursor.close()
-    mydb.close()
+    if mydb != None:
+      mycursor = mydb.cursor()
+      mycursor.execute("SELECT * FROM "+table+"_dictionary") 
+      result = mycursor.fetchall()
+      mycursor.close()
+      mydb.close()
     return result
 
 

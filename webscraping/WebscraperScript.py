@@ -298,20 +298,22 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
             mydb.commit()
 
         # add 0s to old entries in new columns
-        # with open(sibling_dir + '\\' + file_name, 'r') as file:
-        #     reader = csv.reader(file)
-        #     data = list(reader)
+        with open(sibling_dir + '\\' + file_name, 'r') as file:
+            reader = csv.reader(file)
+            data = list(reader)
 
-        # for row in data:
-        #     for c in new_columns:
-        #         row.append('0')
+        for row in data:
+            for c in new_columns:
+                row.append('0')
         
-        # with open(sibling_dir + '\\' + file_name, 'w', newline='') as file:
-        #     writer = csv.writer(file)
-        #     writer.writerows(data)
+        with open(sibling_dir + '\\' + file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(data)
+
+        data = None
 
         # insert frequencies
-        row = [str(id)]
+        row = []
         if new_columns != []:
             columns_db.extend(new_columns)
         for term in columns_db:
@@ -326,6 +328,9 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
         with open(sibling_dir + '\\' + file_name, 'a+', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(row)
+
+        mycursor.execute("INSERT INTO "+table+"_order ("+table.removesuffix("s")+"_id) VALUES "+str(id))
+        mydb.commit()
 
 
 # If there is new data, generate matrix and dictionary
