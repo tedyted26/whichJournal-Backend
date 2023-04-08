@@ -3,3 +3,4 @@ __pycache__/
 venv/
 webscraping/__pycache__/
 webscraping/logs/
+*.csv

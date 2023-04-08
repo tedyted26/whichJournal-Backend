@@ -1,0 +1,1 @@
+D:\tedyt\Documents\GitHub\whichJournal-Backend\venv\Scripts\activate.bat && python D:\tedyt\Documents\GitHub\whichJournal-Backend\webscraping\WebscraperScript.py

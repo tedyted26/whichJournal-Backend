@@ -1,5 +1,7 @@
 {
     "python.analysis.extraPaths": [
-        "./webscraping/models"
+        "./webscraping/models",
+        "./webscraping",
+        "./recommender"
     ]
 }
