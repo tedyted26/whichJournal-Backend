@@ -7,6 +7,8 @@ from sklearn.feature_extraction.text import TfidfTransformer
 import doc_processing
 import os
 import csv
+import numpy as np
+from scipy.sparse import csr_matrix
 
 
 class main_recommender:
@@ -44,15 +46,14 @@ class main_recommender:
     # create a TfidfTransformer object
     tfidf_transformer = TfidfTransformer()
 
-    tf_matrix = None
     # get matrix
     if os.path.isfile('recommender/tf_' + table + '_matrix.csv'): #Compruebo si existe el fichero
-        with open ('recommender/tf_' + table + '_matrix.csv','r') as f:
-          reader = csv.reader(f)
-          matrix = list(reader)
-        
-    # get diccionary
-    dictionary = self.getDictionary(table)
+      tf_matrix_csv = np.loadtxt('recommender/tf_' + table + '_matrix.csv', delimiter=',')
+
+      sparse_tf_matrix = csr_matrix(tf_matrix_csv)
+          
+      # get diccionary
+      dictionary = self.getDictionary(table)
 
     # result = self.getTestText()
     # title_freq = Counter(title_lemma)

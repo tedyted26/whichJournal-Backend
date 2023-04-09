@@ -5,7 +5,6 @@ import Conference, Journal
 import logging
 import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import CountVectorizer
 import os
 import importlib.util
 import numpy as np
@@ -19,8 +18,8 @@ file_path = os.path.join(sibling_dir, 'doc_processing.py')
 
 # Load the module from the file
 spec = importlib.util.spec_from_file_location('doc_processing', file_path)
-myfile = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(myfile)
+doc_processing = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(doc_processing)
 
 # LOG SETUP
 
@@ -252,87 +251,6 @@ mycursor = mydb.cursor()
 
 ##############################################
 
-def update_dictionary_and_matrix(mydb, table:str, entries:int):
-  
-    mycursor = mydb.cursor()
-    mycursor.execute("SELECT * FROM "+table+" ORDER BY id DESC LIMIT "+str(entries))
-    new_data = mycursor.fetchall()
-
-    file_name = "tf_"+table+"_matrix.csv"
-
-    vectorizer = CountVectorizer(tokenizer = myfile.tokenizer)
-
-    for i in new_data:
-        id = i[0]
-        title = i[3]
-        desc = i[4]
-
-        X = None
-
-        try:
-            X = vectorizer.fit_transform([title + " " + desc])
-        except:
-            pass
-
-        if X == None:
-            continue
-    
-        mycursor.execute("SELECT word FROM "+table+"_dictionary")
-        result = mycursor.fetchall()
-        columns_db = []
-        for u in result:
-            columns_db.append(u[0])
-
-        # add words to dictionary
-     
-        feature_columns = vectorizer.get_feature_names_out()
-        new_columns = []
-
-        for c in feature_columns:
-            if c not in columns_db and c != "":
-                new_columns.append(c)
-
-        if new_columns != []:
-            text = "(" + str(new_columns).replace("[", "").replace("]", "").replace(", ","),(") + ");"
-            mycursor.execute("INSERT INTO "+table+"_dictionary (word) VALUES "+text)
-            mydb.commit()
-
-        # add 0s to old entries in new columns
-        with open(sibling_dir + '\\' + file_name, 'r') as file:
-            reader = csv.reader(file)
-            data = list(reader)
-
-        for row in data:
-            for c in new_columns:
-                row.append('0')
-        
-        with open(sibling_dir + '\\' + file_name, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(data)
-
-        data = None
-
-        # insert frequencies
-        row = []
-        if new_columns != []:
-            columns_db.extend(new_columns)
-        for term in columns_db:
-            if term in feature_columns:
-                for i in range(X.size):
-                    word = feature_columns[X.indices[i]]
-                    if word != "" and term == word:
-                        row.append(str(X.data[i]))         
-            else:
-                row.append('0')  
-
-        with open(sibling_dir + '\\' + file_name, 'a+', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(row)
-
-        mycursor.execute("INSERT INTO "+table+"_order ("+table.removesuffix("s")+"_id) VALUES "+str(id))
-        mydb.commit()
-
-
 # If there is new data, generate matrix and dictionary
 logger.info('Checking new info and calculating matrix')
 
@@ -354,18 +272,19 @@ num_conferences = int(result[0][0])
 
 if num_info_journals < num_journals and num_info_conferences < num_conferences:
     logger.info('Updating journals and conferences')
-    update_dictionary_and_matrix(mydb, "journals", num_journals-num_info_journals)
-    update_dictionary_and_matrix(mydb, "conferences", num_conferences - num_info_conferences)
+    doc_processing.update_dictionary_and_matrix(mydb, "journals", num_journals-num_info_journals)
+    logger.info('Journals updated, updating conferences...')
+    doc_processing.update_dictionary_and_matrix(mydb, "conferences", num_conferences - num_info_conferences)
     mycursor.execute("UPDATE info SET num_journals= %s, num_conferences = %s WHERE id=1",(num_journals, num_conferences))
-    logger.info('Updated')
+    logger.info('Journals and conferences updated')
 elif num_info_journals < num_journals and not num_info_conferences < num_conferences:
     logger.info('Updating journals')
-    update_dictionary_and_matrix(mydb, "journals", num_journals-num_info_journals)
+    doc_processing.update_dictionary_and_matrix(mydb, "journals", num_journals-num_info_journals)
     mycursor.execute("UPDATE info SET num_journals= %s WHERE id=1",num_journals)
     logger.info('Updated')
 elif not num_info_journals < num_journals and num_info_conferences < num_conferences:
     logger.info('Updating conferences')
-    update_dictionary_and_matrix(mydb, "conferences")
+    doc_processing.update_dictionary_and_matrix(mydb, "conferences")
     mycursor.execute("UPDATE info SET num_conferences= %s WHERE id=1",num_conferences, num_conferences - num_info_conferences)
     logger.info('Updated')
 else:
