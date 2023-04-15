@@ -1,14 +1,13 @@
 import logging
 import mysql.connector
 import datetime
-import sklearn
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
 import doc_processing
 import os
-import csv
 import numpy as np
 from scipy.sparse import csr_matrix
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 class main_recommender:
@@ -29,48 +28,61 @@ class main_recommender:
   
 
   def recommend(self, title, desc, keywords, table = "journals"):
+    if not os.path.isfile('recommender/tf_' + table + '_matrix.csv'):
+       self.logger.error('File not found: recommender/tf_' + table + '_matrix.csv')
+       return 
 
-    # transform input
+    # get diccionary
+    dictionary = self.getDictionary(table)
+
+    # get input
+    self.logger.info('Adapting input to matrix size...') 
+
     corpus = [title + " " + title + " "+ desc + " " + keywords + " " + keywords + " " + keywords]
-    # tfidf_vector = TfidfVectorizer(tokenizer = doc_processing.tokenizer)
-    # X = tfidf_vector.fit_transform(corpus) 
+    vectorizer = CountVectorizer(tokenizer = doc_processing.tokenizer)
 
-    # for i in range(X.shape[1]):
-    #   print(X.data[i])
-    #   print(tfidf_vector.get_feature_names_out()[X.indices[i]])
+    X = vectorizer.fit_transform(corpus)
+    feature_columns = vectorizer.get_feature_names_out()
 
+    # create a tf_row from input
+    tf_input_row = []
+    for term in dictionary:
+      if term[1] in feature_columns:
+          for i in range(X.size):
+            word = feature_columns[X.indices[i]]
+            if word != "" and term[1] == word:
+                tf_input_row.append(str(X.data[i]))         
+      else:
+          tf_input_row.append('0')
 
-    
-    # assume term frequency matrix is stored in variable 'tf_matrix'
-
-    # create a TfidfTransformer object
-    tfidf_transformer = TfidfTransformer()
+    self.logger.info('Loading matrix...') 
 
     # get matrix
-    if os.path.isfile('recommender/tf_' + table + '_matrix.csv'): #Compruebo si existe el fichero
-      tf_matrix_csv = np.loadtxt('recommender/tf_' + table + '_matrix.csv', delimiter=',')
+    tf_matrix_csv = np.loadtxt('recommender/tf_' + table + '_matrix.csv', delimiter=',')    
 
-      sparse_tf_matrix = csr_matrix(tf_matrix_csv)
-          
-      # get diccionary
-      dictionary = self.getDictionary(table)
+    self.logger.info('Transforming matrix and input into tf-idf...')
 
-    # result = self.getTestText()
-    # title_freq = Counter(title_lemma)
+    # converto into tfidf
+    tfidf_transformer = TfidfTransformer()
+    tfidf_matrix = tfidf_transformer.fit_transform(tf_matrix_csv)
+    tfidf_input_row = tfidf_transformer.transform([tf_input_row]) 
 
-    # documents = []
-    # for i in result:
-    #   i_text = str(i[3]) + str(i[4])
-    #   documents.append(i_text)
+    self.logger.info('Calculating cosine similarity...')
 
-    # add words to dictionary if they don't exist
+    # cosine similarity
+    results = cosine_similarity(tfidf_matrix, tfidf_input_row)
     
-    # X = tfidf_vector.fit_transform(documents)  
-    # dictionary = tfidf_vector.get_feature_names_out()
+    self.logger.info('Getting journal_ids for each result...')
 
+    # get results in a dictionary with the respective journals_order.id (from database)
+    results_dic = self.getResultsDictionaryWithJournalIds(table, results)
+    
+    self.logger.info('Done')
 
+    self.logger.info('Classifying info...')
+    # execute algorithm
+    return self.getClassifiedResults(tfidf_matrix, tfidf_input_row)
 
-    pass
 
   def getDictionary(self, table):
     mydb = None
@@ -92,7 +104,50 @@ class main_recommender:
       mydb.close()
     return result
 
+  def getClassifiedResults(self, matrix, input):
+    
+    order_id_entry = 1
+    info_entries = {}
+
+    #TODO
+    # Call clasifier
+
+  def getResultsDictionaryWithJournalIds(self, table, results):
+    mydb = None
+    try:
+      mydb = mysql.connector.connect(
+      host="127.0.0.1",
+      user="root",
+      password="root",
+      database="whichjournal"
+    )
+    except mysql.connector.Error:
+      self.logger.critical("Couldn't connect to DB. Error in Mysql.connector")
+    
+    if mydb == None:
+      return {}
+    
+    mycursor = mydb.cursor()    
+  
+    journal_order = 1
+    results_dic = {}
+    for row in results:
+      if row[0] == 0.0:
+        journal_order += 1
+        continue
+      
+      mycursor.execute("SELECT journal_id FROM "+table+"_order WHERE id="+str(journal_order)) 
+      journal_id = mycursor.fetchall()[0][0]
+
+      results_dic[journal_id]=row[0]
+      journal_order += 1
+
+    mycursor.close()
+    mydb.close()
+
+    return results_dic
+       
 
 m = main_recommender()
-m.recommend("This tutorial is about Natural Language Processing in spaCy. ", "This is the description of the text", "This may be empty or not, but it is very important")
+m.recommend("Digital Economy and Sustainable Development", "This is the description of the text", "This may be empty or not, but it is very important")
 
