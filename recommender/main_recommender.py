@@ -72,10 +72,10 @@ class main_recommender:
     # cosine similarity
     results = cosine_similarity(tfidf_matrix, tfidf_input_row)
     
-    self.logger.info('Getting journal_ids for each result...')
+    self.logger.info('Getting id for each document...')
 
     # get results in a dictionary with the respective journals_order.id (from database)
-    results_dic = self.getResultsDictionaryWithJournalIds(table, results)
+    results_dic = self.getResultsDictionaryWithIds(table, results)
     
     self.logger.info('Done')
 
@@ -112,7 +112,7 @@ class main_recommender:
     #TODO
     # Call clasifier
 
-  def getResultsDictionaryWithJournalIds(self, table, results):
+  def getResultsDictionaryWithIds(self, table, results):
     mydb = None
     try:
       mydb = mysql.connector.connect(
@@ -127,20 +127,21 @@ class main_recommender:
     if mydb == None:
       return {}
     
-    mycursor = mydb.cursor()    
+    mycursor = mydb.cursor() 
+    column_name = table.removesuffix("s") + "_id"
   
-    journal_order = 1
+    jc_order = 1
     results_dic = {}
     for row in results:
       if row[0] == 0.0:
-        journal_order += 1
+        jc_order += 1
         continue
       
-      mycursor.execute("SELECT journal_id FROM "+table+"_order WHERE id="+str(journal_order)) 
-      journal_id = mycursor.fetchall()[0][0]
+      mycursor.execute("SELECT "+column_name+" FROM "+table+"_order WHERE id="+str(jc_order)) 
+      jc_id = mycursor.fetchall()[0][0]
 
-      results_dic[journal_id]=row[0]
-      journal_order += 1
+      results_dic[jc_id]=row[0]
+      jc_order += 1
 
     mycursor.close()
     mydb.close()
@@ -149,5 +150,5 @@ class main_recommender:
        
 
 m = main_recommender()
-m.recommend("Digital Economy and Sustainable Development", "This is the description of the text", "This may be empty or not, but it is very important")
+m.recommend("Digital Economy and Sustainable Development", "This is the description of the text", "This may be empty or not, but it is very important", table="conferences")
 
