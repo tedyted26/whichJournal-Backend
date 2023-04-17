@@ -153,15 +153,15 @@ def insertSJRInformation(mydb, journal_id, issn: str):
     mydb.commit()
     mycursor.close()
   
-try:
-    mydb = mysql.connector.connect(
-    host="127.0.0.1",
-    user="root",
-    password="root",
-    database="whichjournal"
-    )
-except:
-    pass
+# try:
+#     mydb = mysql.connector.connect(
+#     host="127.0.0.1",
+#     user="root",
+#     password="root",
+#     database="whichjournal"
+#     )
+# except:
+#     pass
     
 # insertSJRInformation(mydb, 4998, '2287-1160')
 
