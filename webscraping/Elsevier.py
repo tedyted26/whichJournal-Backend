@@ -89,7 +89,7 @@ def getElsevierJournalDetails(url: str):
 
     if html == "":
         return Journal.Journal(url, "", "", "", "", "", "", 
-                   "", "", "", "", "", "", "", "", "Elsevier", "")
+                   "", "", "", "", "", "", "", "", "Elsevier", "", [], [], "")
     
     soup = BeautifulSoup(html, 'html.parser')   
     imagePath = soup.find("a", class_="js-cover-image-link").find("img")["src"]
@@ -111,7 +111,7 @@ def getElsevierJournalDetails(url: str):
         soup_aims.clear()
 
     issn_text = soup.find(class_="js-issn").text
-    issn = re.search("ISSN:\s+([\d\-]+)",issn_text).group(1)
+    issn = re.search("ISSN:\s+([\d\-]+X?)",issn_text).group(1)
 
     type = ""
     type_container = soup.find(class_ = "js-open-statement-text")
@@ -184,7 +184,7 @@ def getElsevierJournalDetails(url: str):
         soup_indexing.clear()
     
     return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
-                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Elsevier", indexing)
+                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Elsevier", indexing, [], [], "")
                 
 
 

@@ -27,13 +27,21 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
 
     for i in new_data:
         id = i[0]
-        title = i[3]
-        desc = i[4]
+        if table =="journals":
+            title = i[3]
+            desc = i[4]
+            topics = []
+            tags = []
+        elif table == "conferences":
+            title = i[2]
+            desc = i[3]
+            topics = i[4]
+            tags = i[10]
 
         X = None
 
         try:
-            X = vectorizer.fit_transform([title + " " + desc])
+            X = vectorizer.fit_transform([title + " " + desc + " " + str(topics) + " " + str(tags)])
         except:
             pass
 

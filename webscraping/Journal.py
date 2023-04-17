@@ -15,7 +15,10 @@ class Journal:
     timePublication:str,
     timeReview:str,
     origin: str,
-    indexing: list):
+    indexing: list,
+    sjr_subject_areas: list,
+    sjr_subject_categories: list,
+    sjr_ranking:float):
         self.url = url
         self.imagePath = imagePath
         self.title = title
@@ -33,3 +36,6 @@ class Journal:
         self.timeReview = timeReview
         self.origin = origin
         self.indexing = indexing
+        self.sjr_subject_areas = sjr_subject_areas
+        self.sjr_subject_categories = sjr_subject_categories
+        self.sjr_ranking = sjr_ranking

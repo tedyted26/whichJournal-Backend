@@ -61,7 +61,7 @@ def getMDPIJournalDetails(url: str):
 
     if html == "":
         return Journal.Journal(url, "", "", "", "", "", "", "", 
-                   "", "", "", "", "", "", "", "", "MDPI", "")
+                   "", "", "", "", "", "", "", "", "MDPI", "", [], [], "")
     
     soup = BeautifulSoup(html, 'html.parser')   
     
@@ -156,7 +156,7 @@ def getMDPIJournalDetails(url: str):
 
 
     return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
-                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "MDPI", otherInfo)
+                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "MDPI", otherInfo, [], [], "")
                 
 
 

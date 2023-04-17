@@ -54,7 +54,7 @@ def getSpringerJournalDetails(url: str):
 
     if html == "":
         return Journal.Journal(url, "", "", "", "", "", "", 
-                   "", "", "", "", "", "", "", "", "Springer", "")
+                   "", "", "", "", "", "", "", "", "Springer", "", [], [], "")
     
     soup = BeautifulSoup(html, 'html.parser')
 
@@ -86,7 +86,7 @@ def getSpringerJournalDetails(url: str):
         if item_name.find("ISSN") != -1:
             issn = item.find(class_="c-list-description__details").text.replace("\n", "").replace(" ", "")
         if item_name == "Publishing model":
-            type = item.find(class_="c-list-description__details").text.replace("How to publish with us, including Open Access", "").replace("\n", "").lstrip().rstrip()
+            type = item.find(class_="c-list-description__details").text.replace("How to publish with us, including Open Access", "").replace("How to publish with us", "").replace("\n", "").replace(".", "").lstrip().rstrip()
     
     journal_metrics = soup.findAll(class_ = "app-journal-metrics__details")
     impactFactor = ""
@@ -144,7 +144,7 @@ def getSpringerJournalDetails(url: str):
     
     
     return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
-                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Springer", indexing)
+                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "Springer", indexing, [], [], "")
                 
 
 

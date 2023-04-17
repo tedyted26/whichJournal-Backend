@@ -8,6 +8,7 @@ import os
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_selection import mutual_info_classif
 
 
 class main_recommender:

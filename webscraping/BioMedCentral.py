@@ -49,7 +49,7 @@ def getBMCJournalDetails(url: str):
 
     if html == "":
         return Journal.Journal(url, "", "", "", "", "", "", "", 
-                   "", "", "", "", "", "", "", "", "BMC", "")
+                   "", "", "", "", "", "", "", "", "BMC", "", [], [], "")
     
     soup = BeautifulSoup(html, 'html.parser')
     imagePath = ""   
@@ -156,7 +156,7 @@ def getBMCJournalDetails(url: str):
  
     
     return Journal.Journal(url, imagePath, title, desc, issn, type, price, 
-                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "BMC", otherInfo)
+                   impactFactor, quartil, otherMetric, nameOtherMetric, acceptanceRate, timeDecision, timePublication, timeReview, "BMC", otherInfo, [], [], "")
                 
 
 
