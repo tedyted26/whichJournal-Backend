@@ -1,6 +1,6 @@
 import csv
 import mysql.connector
-import BeallsList, BioMedCentral, Elsevier, MDPI, Springer, wikiCFP
+import BeallsList, BioMedCentral, Elsevier, MDPI, Springer, wikiCFP, SJR
 import Conference, Journal
 import logging
 import datetime
@@ -277,11 +277,17 @@ if num_info_journals < num_journals and num_info_conferences < num_conferences:
     doc_processing.update_dictionary_and_matrix(mydb, "conferences", num_conferences - num_info_conferences)
     mycursor.execute("UPDATE info SET num_journals= %s, num_conferences = %s WHERE id=1",(num_journals, num_conferences))
     logger.info('Journals and conferences updated')
+    logger.info('Gathering info from SJR...')
+    SJR.updateJournalInformation(mydb, num_journals-num_info_journals)
+    logger.info('SJR info gathered')
 elif num_info_journals < num_journals and not num_info_conferences < num_conferences:
     logger.info('Updating journals')
     doc_processing.update_dictionary_and_matrix(mydb, "journals", num_journals-num_info_journals)
     mycursor.execute("UPDATE info SET num_journals= %s WHERE id=1",num_journals)
     logger.info('Updated')
+    logger.info('Gathering info from SJR...')
+    SJR.updateJournalInformation(mydb, num_journals-num_info_journals)
+    logger.info('SJR info gathered')
 elif not num_info_journals < num_journals and num_info_conferences < num_conferences:
     logger.info('Updating conferences')
     doc_processing.update_dictionary_and_matrix(mydb, "conferences")
