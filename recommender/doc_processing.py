@@ -1,5 +1,6 @@
 import spacy
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_selection import SelectKBest, chi2
 import os
 import csv
 import re
@@ -54,9 +55,23 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
         for u in result:
             columns_db.append(u[0])
 
-        # add words to dictionary
-     
+        # get most frequent terms
         feature_columns = vectorizer.get_feature_names_out()
+
+        dict_frequencies = {}
+        for i in range(len(X.data)):
+            dict_frequencies[X.indices[i]] = X.data[i]
+        
+        dict_frequencies_sorted = dict(sorted(dict_frequencies.items(), key=lambda item: item[1], reverse = True))
+        most_frequent_terms = []
+        counter = 0
+        for key in dict_frequencies_sorted:  
+            if counter > 15:
+                break         
+            most_frequent_terms.append(feature_columns[key])
+            counter += 1
+
+        # add words to dictionary
         new_columns = []
 
         for c in feature_columns:

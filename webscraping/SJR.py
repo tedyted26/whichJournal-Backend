@@ -11,11 +11,12 @@ def updateJournalInformation(mydb, limit):
     for row in new_data:
         id = row[0]
         issn = row[1]
-        insertSJRInformation(mydb, id, issn)
+        try:
+            insertSJRInformation(mydb, id, issn)
+        except:
+            pass
     
     
-
-
 def insertSJRInformation(mydb, journal_id, issn: str):
     html = ""
     head = {
@@ -88,20 +89,32 @@ def insertSJRInformation(mydb, journal_id, issn: str):
     soup = BeautifulSoup(html_journal, 'html.parser', parse_only=only_ranking)
 
     q_div = soup.find("div", class_="cell100x1 dynamiccell")
-    q_table = q_div.find("table").find("tbody")
-    q_rows = q_table.findAll("tr")
-    q_row_length = len(q_rows)
-    categories_len = len(subject_categories)
-    for i in range(categories_len):
-        row = q_rows[(i+1)*int(q_row_length/categories_len)-1]
-        row_elements = row.findAll("td")
-        quartil_per_category[row_elements[0].text.strip()] = row_elements[2].text.strip()
+    if q_div != None:
+        q_table = q_div.find("table").find("tbody")
+        q_rows = q_table.findAll("tr")
+        old_q_category = ""
+        old_q = ""
+        for row in q_rows:
+            row_elements = row.findAll("td")
+            q_category = row_elements[0].text.strip()
+            if old_q_category == "":
+                old_q_category = q_category
+                continue
+            if old_q_category != q_category:
+                quartil_per_category[old_q_category] = old_q
+                old_q_category = q_category
+            else:
+                old_q = row_elements[2].text.strip()
+        quartil_per_category[old_q_category] = old_q
 
     #get sjr_ranking from same page
     sjr_div = soup.find("div", class_="cell1x1 dynamiccell")
     sjr_table = sjr_div.find("table").find("tbody")
     sjr_rows = sjr_table.findAll("tr")[-1]
-    sjr_ranking = sjr_rows.findAll("td")[1].text.strip()
+    try:
+        sjr_ranking = sjr_rows.findAll("td")[1].text.strip()
+    except:
+        sjr_ranking = None
 
     #INSERT into db
     
@@ -143,7 +156,10 @@ def insertSJRInformation(mydb, journal_id, issn: str):
     for id, c in db_categories:
         if c in subject_categories:
             subject_categories_ids_insert += str(id) + ","
-            quartil_per_id_category += str(quartil_per_category[c]) + ","
+            if c in quartil_per_category:
+                quartil_per_id_category += str(quartil_per_category[c]) + ","
+            else:
+                quartil_per_id_category += ","
     subject_categories_ids_insert = subject_categories_ids_insert.removesuffix(",") + "]"
     quartil_per_id_category = quartil_per_id_category.removesuffix(",") + "]"
 
@@ -163,6 +179,6 @@ def insertSJRInformation(mydb, journal_id, issn: str):
 # except:
 #     pass
     
-# insertSJRInformation(mydb, 4998, '2287-1160')
+# insertSJRInformation(mydb, 3062, '2730-5716')
 
 # updateJournalInformation(mydb, 20)
