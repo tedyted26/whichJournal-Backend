@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 # Get the path of the sibling folder
-sibling_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'recommender'))
+sibling_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'processing'))
 
 # Get the path of the file to import
 file_path = os.path.join(sibling_dir, 'doc_processing.py')
@@ -259,6 +259,8 @@ result = mycursor.fetchall()
 
 num_info_journals = int(result[0][1])
 num_info_conferences = int(result[0][2])
+num_info_journals_terms = int(result[0][3])
+num_info_conferences_terms = int(result[0][4])
 
 mycursor.execute("SELECT COUNT(*) FROM journals")
 result = mycursor.fetchall()
@@ -270,9 +272,12 @@ result = mycursor.fetchall()
 
 num_conferences = int(result[0][0])
 
+logger.info(str(num_journals-num_info_journals) + ' new journals')
+logger.info(str(num_conferences - num_info_conferences) + ' new conferences')
+
 #--------SJR--------#
 if num_journals-num_info_journals != 0:
-  logger.info('Gathering info from SJR...')
+  logger.info('Gathering info from SJR and updating new journals...')
   SJR.updateJournalInformation(mydb, num_journals-num_info_journals)
 #-------------------#
 
@@ -300,6 +305,26 @@ elif not num_info_journals < num_journals and num_info_conferences < num_confere
 
 else:
     logger.info('Nothing to update')
+
+#--------Information gain--------#
+# Check if dictionaries have new words. If they do, calculate the information gain per term
+
+mycursor.execute("SELECT COUNT(*) FROM journals_dictionary")
+result = mycursor.fetchall()
+
+num_journals_terms = int(result[0][0])
+
+mycursor.execute("SELECT COUNT(*) FROM conferences_dictionary")
+result = mycursor.fetchall()
+
+num_conferences_terms = int(result[0][0])
+
+logger.info('Calculating information gain')
+
+# TODO
+
+
+
 
 mydb.commit()
 mycursor.close()

@@ -83,8 +83,8 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
             mycursor.execute("INSERT INTO "+table+"_dictionary (word) VALUES "+text)
             mydb.commit()
 
-        if not os.path.exists('recommender/' + file_name):
-            with open('recommender/' + file_name, 'w') as file:
+        if not os.path.exists('processing/' + file_name):
+            with open('processing/' + file_name, 'w') as file:
                 # write initial content to the file
                 file.write("")
 
@@ -101,7 +101,7 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
             else:
                 row.append('0')  
 
-        with open('recommender/' + file_name, 'a+', newline='') as file:
+        with open('processing/' + file_name, 'a+', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(row)
 
@@ -113,7 +113,7 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
     words = mycursor.fetchall()[0][0]
 
     # add 0s to rows that have new words
-    with open('recommender/' + file_name, 'r') as file:
+    with open('processing/' + file_name, 'r') as file:
         reader = csv.reader(file)
         data = list(reader)
 
@@ -123,6 +123,9 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
             for c in range(words - lenght):
                 row.append('0')
     
-    with open('recommender/' + file_name, 'w', newline='') as file:
+    with open('processing/' + file_name, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(data)
+
+def calculate_information_gain():
+    pass
