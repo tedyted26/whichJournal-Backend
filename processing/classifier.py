@@ -15,11 +15,17 @@ class classifier_class:
     def classify_predators(self, journal_dict):
         self.logger.info('Classifying predators') 
 
+        if len(journal_dict) < 1:
+            return journal_dict
+        
         mycursor = db.get_cursor()
     
         if mycursor == None:
             self.logger.critical("Couldn't connect to DB. Error in Mysql.connector.Cursor")
-            return {}
+            journal_dict_error = {}
+            for key in journal_dict:
+                journal_dict_error[key] = [journal_dict[key], predator_enum.Predator.NO.value]
+            return journal_dict_error
         
         self.logger.info('Checking '+ str(len(journal_dict)) + ' journals')
 

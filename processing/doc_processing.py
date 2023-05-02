@@ -4,6 +4,8 @@ from sklearn.feature_selection import SelectKBest, chi2
 import os
 import csv
 import re
+import docx
+import PyPDF2
 
 def tokenizer(text):
     nlp = spacy.load("en_core_web_sm")
@@ -129,3 +131,89 @@ def update_dictionary_and_matrix(mydb, table:str, entries:int):
 
 def calculate_information_gain():
     pass
+
+def transform_input_file_into_title_abstract(file):
+
+    text = ""
+    abstract = ""
+    title = ""
+    keywords = ""
+
+    try:
+            text = getPdfText(file)           
+    except:
+            try:
+                text = getDocText(file)           
+            except:
+                raise ValueError('Could not decode the file')
+
+    title_pattern = re.compile(r'(.*)ABSTRACT\b', re.DOTALL | re.IGNORECASE)
+    try:
+        title_match = title_pattern.search(text)
+        title = title_match.group(1)
+    except:
+        pass
+
+    abstract_pattern = re.compile(r'\bABSTRACT\b(?:\W+\w+){1,200}', re.DOTALL | re.IGNORECASE)
+    try:
+        abstract_match = abstract_pattern.search(text)
+        abstract = abstract_match.group(0)
+    except:
+        pass
+
+    keywords_pattern = re.compile(r'\bKEYWORDS\b(?:\W+\w+){1,5}', re.DOTALL | re.IGNORECASE)
+    try:
+        keywords_match = keywords_pattern.search(text)
+        keywords = keywords_match.group(0)
+    except:
+        pass
+
+    return title, abstract, keywords
+
+def getDocText(file):
+    doc = docx.Document(file)
+    
+    raw_text = ""
+    for para in doc.paragraphs:
+        raw_text += para.text
+
+    return raw_text
+
+def getPdfText(file):
+    pdf = PyPDF2.PdfReader(file)
+    text = ""
+    for page in pdf.pages:
+        text += page.extract_text()
+    return text
+    
+
+
+    
+
+
+# Encoding tries. Not erased in case it is needed again
+
+    # possible_encodings = ['utf-8', 'iso-8859-1', 'windows-1252', 'ascii']
+    # num_errors = []
+    # encoding = ""
+    # for e in possible_encodings:
+    #     try:
+    #         text = codecs.decode(file_contents, e)
+    #         encoding = e
+    #         num_errors.append(0)
+    #         break
+    #     except UnicodeDecodeError as error:
+    #         num_errors.append(len(error.args[1]))
+
+    # if encoding == "":
+    #     min = None
+    #     for i in range(len(num_errors)):
+    #         if min == None:
+    #             min = num_errors[i]
+    #         else:
+    #             if min > num_errors[i]:
+    #                 min = num_errors[i]
+    #                 encoding = possible_encodings[i]   
+    
+    # text = file_contents.decode(encoding)
+    # text = file_contents.decode('windows-1252', 'ignore')
