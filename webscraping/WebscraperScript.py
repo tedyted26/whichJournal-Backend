@@ -95,155 +95,155 @@ mycursor = mydb.cursor()
 
 ##############################################
 
-# def insert_journals(journal_list:list, origin:str):
-#     if journal_list == []:
-#       logger.error(origin + ' Scraping failed')
-#     else:
-#       lenght = len(journal_list)
-#       logger.info("Starting " + origin + "... "+str(lenght)+" total")
-#       i = 0
-#       for url in journal_list:
-#           journal = None
-#           try:
-#             if origin == "ELSEVIER":
+def insert_journals(journal_list:list, origin:str):
+    if journal_list == []:
+      logger.error(origin + ' Scraping failed')
+    else:
+      lenght = len(journal_list)
+      logger.info("Starting " + origin + "... "+str(lenght)+" total")
+      i = 0
+      for url in journal_list:
+          journal = None
+          try:
+            if origin == "ELSEVIER":
 
-#               mycursor.execute("SELECT id FROM journals WHERE origin = 'Elsevier' AND url = '"+url+"'")
-#               result = mycursor.fetchall()
+              mycursor.execute("SELECT id FROM journals WHERE origin = 'Elsevier' AND url = '"+url+"'")
+              result = mycursor.fetchall()
 
-#               if result != []:
-#                 continue
-#               journal = Elsevier.getElsevierJournalDetails(url)
-#             elif origin == "BMC":
-#               journal = BioMedCentral.getBMCJournalDetails(url)
-#             elif origin == "SPRINGER":
-#               journal = Springer.getSpringerJournalDetails(url)
-#             elif origin == "MDPI":
-#               journal = MDPI.getMDPIJournalDetails(url)
-#           except:
-#             logger.error(str(i+1)+"/"+str(lenght) + " " + origin + " Scraping failed. Url: "+url)
+              if result != []:
+                continue
+              journal = Elsevier.getElsevierJournalDetails(url)
+            elif origin == "BMC":
+              journal = BioMedCentral.getBMCJournalDetails(url)
+            elif origin == "SPRINGER":
+              journal = Springer.getSpringerJournalDetails(url)
+            elif origin == "MDPI":
+              journal = MDPI.getMDPIJournalDetails(url)
+          except:
+            logger.error(str(i+1)+"/"+str(lenght) + " " + origin + " Scraping failed. Url: "+url)
 
-#           if journal != None and (journal.title=="" or journal.issn == ""):        
-#             logger.warning(str(i+1)+"/"+str(lenght) + " Empty Journal: " + url)
-#           elif journal != None:
-#             data_journal = (journal.url, journal.imagePath, journal.title, journal.description, journal.issn, 
-#                             journal.type, journal.price, journal.impactFactor,
-#                             journal.otherMetric, journal.nameOtherMetric, journal.acceptanceRate, 
-#                   journal.timeDecision, journal.timePublication, journal.timeReview, journal.origin, str(journal.indexing))
-#             try: 
-#               mycursor.execute(add_journal, data_journal)
-#               mydb.commit()
-#             except Exception:
-#               e = str(type(Exception).__name__)
-#               logger.error("Insert into DB failed. Origin: "+ origin + ", Url: "+url+" Error: "+ e)
-#           i = i+1
-#     logger.info(origin + " Ended")
+          if journal != None and (journal.title=="" or journal.issn == ""):        
+            logger.warning(str(i+1)+"/"+str(lenght) + " Empty Journal: " + url)
+          elif journal != None:
+            data_journal = (journal.url, journal.imagePath, journal.title, journal.description, journal.issn, 
+                            journal.type, journal.price, journal.impactFactor,
+                            journal.otherMetric, journal.nameOtherMetric, journal.acceptanceRate, 
+                  journal.timeDecision, journal.timePublication, journal.timeReview, journal.origin, str(journal.indexing))
+            try: 
+              mycursor.execute(add_journal, data_journal)
+              mydb.commit()
+            except Exception:
+              e = str(type(Exception).__name__)
+              logger.error("Insert into DB failed. Origin: "+ origin + ", Url: "+url+" Error: "+ e)
+          i = i+1
+    logger.info(origin + " Ended")
 
 
-# bmc = []
-# els = []
-# mdpi = []
-# spr = []
+bmc = []
+els = []
+mdpi = []
+spr = []
 
-# #--------BMC--------#
-# try:
-#   bmc = BioMedCentral.getBMCJournals()
-# except:
-#   pass
+#--------BMC--------#
+try:
+  bmc = BioMedCentral.getBMCJournals()
+except:
+  pass
 
-# insert_journals(bmc, "BMC")
+insert_journals(bmc, "BMC")
 
-# #--------ELSEVIER--------#
+#--------ELSEVIER--------#
 
-# try:
-#   els = Elsevier.getElsevierJournals(Elsevier.getElsevierPages())
-# except:
-#   pass
+try:
+  els = Elsevier.getElsevierJournals(Elsevier.getElsevierPages())
+except:
+  pass
 
-# insert_journals(els, "ELSEVIER")
+insert_journals(els, "ELSEVIER")
 
-# #--------SPRINGER--------#
+#--------SPRINGER--------#
 
-# try:
-#   spr = Springer.getSpringerJournals()
-# except:
-#   pass
+try:
+  spr = Springer.getSpringerJournals()
+except:
+  pass
 
-# insert_journals(spr, "SPRINGER")
+insert_journals(spr, "SPRINGER")
 
-# #--------MDPI--------#
+#--------MDPI--------#
 
-# try:
-#   mdpi = MDPI.getMDPIJournals()
-# except:
-#   pass
+try:
+  mdpi = MDPI.getMDPIJournals()
+except:
+  pass
 
-# insert_journals(mdpi, "MDPI")
+insert_journals(mdpi, "MDPI")
 
-# ##############################################
+##############################################
 
-# # CONFERENCES
+# CONFERENCES
 
-# ##############################################
+##############################################
 
-# def insert_conferences(conference_list:list, origin:str):
-#     if conference_list == []:
-#       logger.error(origin + ' Scraping failed')
-#     else:
-#       lenght = len(conference_list)
-#       logger.info("Starting " + origin + "... "+str(lenght)+" total")
-#       i = 0
-#       for url in conference_list:
-#           conference = None
-#           try:
-#             if origin == "WIKICFP":         
-#               mycursor.execute("SELECT id FROM conferences WHERE origin = 'WikiCFP' AND url = 'http://www.wikicfp.com/"+url+"'")
-#               result = mycursor.fetchall()
+def insert_conferences(conference_list:list, origin:str):
+    if conference_list == []:
+      logger.error(origin + ' Scraping failed')
+    else:
+      lenght = len(conference_list)
+      logger.info("Starting " + origin + "... "+str(lenght)+" total")
+      i = 0
+      for url in conference_list:
+          conference = None
+          try:
+            if origin == "WIKICFP":         
+              mycursor.execute("SELECT id FROM conferences WHERE origin = 'WikiCFP' AND url = 'http://www.wikicfp.com/"+url+"'")
+              result = mycursor.fetchall()
 
-#               if result != []:
-#                 continue
+              if result != []:
+                continue
               
-#               conference = wikiCFP.getWikiCFPConferenceDetails("http://www.wikicfp.com/" + url)
-#           except:
-#             logger.error(str(i+1)+"/"+str(lenght) + " " + origin + " Scraping failed. Url: http://www.wikicfp.com/"+url)
+              conference = wikiCFP.getWikiCFPConferenceDetails("http://www.wikicfp.com/" + url)
+          except:
+            logger.error(str(i+1)+"/"+str(lenght) + " " + origin + " Scraping failed. Url: http://www.wikicfp.com/"+url)
 
-#           if conference != None and (conference.titulo=="" or conference.descripcion==""):        
-#             logger.warning(str(i+1)+"/"+str(lenght) + " Empty Conference: " + url)
-#           elif conference != None:
-#             data_conference = (conference.url, conference.titulo, conference.descripcion,  str(conference.temas),
-#                                conference.fecha, conference.ubicacion, conference.fechaInscripcion, conference.organizacion,
-#                               conference.tipo,  str(conference.tags), conference.precio, conference.origen)
+          if conference != None and (conference.titulo=="" or conference.descripcion==""):        
+            logger.warning(str(i+1)+"/"+str(lenght) + " Empty Conference: " + url)
+          elif conference != None:
+            data_conference = (conference.url, conference.titulo, conference.descripcion,  str(conference.temas),
+                               conference.fecha, conference.ubicacion, conference.fechaInscripcion, conference.organizacion,
+                              conference.tipo,  str(conference.tags), conference.precio, conference.origen)
 
-#             try: 
-#               mycursor.execute(add_conference, data_conference)
-#               mydb.commit()
-#             except Exception:
-#               logger.error("Insert into DB failed. Origin: "+ origin + ", Url: "+url+" Error: "+ str(Exception.__name__))
-#           i = i+1
-#     logger.info(origin + " Ended")
+            try: 
+              mycursor.execute(add_conference, data_conference)
+              mydb.commit()
+            except Exception:
+              logger.error("Insert into DB failed. Origin: "+ origin + ", Url: "+url+" Error: "+ str(Exception.__name__))
+          i = i+1
+    logger.info(origin + " Ended")
 
 
-# wiki = []
+wiki = []
 
-# #--------WikiCFP--------#
-# # categories = []
-# list_conferences = []
+#--------WikiCFP--------#
+# categories = []
+list_conferences = []
 
-# # try:
-# #   categories = wikiCFP.getWikiCFPCategories()
-# # except:
-# #   logger.error('WikiCFP Category scraping failed')
+# try:
+#   categories = wikiCFP.getWikiCFPCategories()
+# except:
+#   logger.error('WikiCFP Category scraping failed')
 
-# for c in wikiCFP.getSavedCategories():
-#   new_links = []
-#   try:
-#     new_links = wikiCFP.getWikiCFPConferences(c)
-#   except:
-#     logger.warning('WikiCFP Category page scraping skipped')
+for c in wikiCFP.getSavedCategories():
+  new_links = []
+  try:
+    new_links = wikiCFP.getWikiCFPConferences(c)
+  except:
+    logger.warning('WikiCFP Category page scraping skipped')
   
-#   if new_links != []:
-#     wiki.extend(new_links)
+  if new_links != []:
+    wiki.extend(new_links)
 
-# insert_conferences(wiki, "WIKICFP")
+insert_conferences(wiki, "WIKICFP")
 
 ##############################################
 
@@ -309,17 +309,17 @@ else:
 #--------Information gain--------#
 # Check if dictionaries have new words. If they do, calculate the information gain per term
 
-mycursor.execute("SELECT COUNT(*) FROM journals_dictionary")
-result = mycursor.fetchall()
+# mycursor.execute("SELECT COUNT(*) FROM journals_dictionary")
+# result = mycursor.fetchall()
 
-num_journals_terms = int(result[0][0])
+# num_journals_terms = int(result[0][0])
 
-mycursor.execute("SELECT COUNT(*) FROM conferences_dictionary")
-result = mycursor.fetchall()
+# mycursor.execute("SELECT COUNT(*) FROM conferences_dictionary")
+# result = mycursor.fetchall()
 
-num_conferences_terms = int(result[0][0])
+# num_conferences_terms = int(result[0][0])
 
-logger.info('Calculating information gain')
+# logger.info('Calculating information gain')
 
 # TODO
 

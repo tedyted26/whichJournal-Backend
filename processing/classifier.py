@@ -71,7 +71,7 @@ class classifier_class:
             distance_url = jellyfish.jaro_winkler(modified_url, url)
             distance_title = jellyfish.jaro_winkler(name, title)
             
-            if distance_url > 0.9 or distance_title > 0.95:
+            if distance_url > 0.97 or distance_title > 0.97:
                 return predator_enum.Predator.YES.value
             
         return predator_enum.Predator.NO.value

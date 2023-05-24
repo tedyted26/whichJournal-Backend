@@ -130,30 +130,22 @@ def get_journals_json(journals_dict):
         json += '"timePublication" : "'+journal_info[13]+'",'
         json += '"timeReview" : "'+journal_info[14]+'",'
 
-        categories_array = journal_info[18]
-        quartil_array = journal_info[19]
-        quartil = ""
-        category = ""
+        try:
+            quartil_array = ast.literal_eval(journal_info[19].replace("[", "['").replace("]", "']").replace(",", "','"))
+        except:
+            quartil_array = []
 
-        if quartil_array != None or quartil_array != "":
-            # if info matches, then get first quartil and first category
-            if categories_array != None and categories_array != "" and len(quartil_array) == len(categories_array):
-                quartil = quartil_array[0]
-                category = categories_array[0]
-            # if not, get an average
-            else:
-                values = []
-                for q in quartil:
-                    if q != "":
-                        values.append(int(q.removeprefix("Q")))
-                if values != []:
-                    quartil = "Q" + str(statistics.mode(values))
-                    category = "most frequently"
-        if quartil != "":
-            quartil_string = quartil + "(" + category + ")" 
-        else: 
-            quartil_string = ""       
-        json += '"quartil" : "'+quartil_string+'",'
+        quartil = ""
+
+        if quartil_array != None and quartil_array != []:
+            values = []
+            for q in quartil_array:
+                if q != "":
+                    values.append(int(q.removeprefix("Q")))
+            if values != []:
+                quartil = "Q" + str(statistics.mode(values))
+
+        json += '"quartil" : "'+quartil+'",'
         ranking = str(journal_info[20])
         if ranking == "None":
             ranking = ""
@@ -162,6 +154,7 @@ def get_journals_json(journals_dict):
 
     json = json.removesuffix(",")
     json += ']'
+    
 
     mycursor.close()
     return json
